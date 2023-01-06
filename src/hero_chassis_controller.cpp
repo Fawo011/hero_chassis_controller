@@ -4,6 +4,7 @@
 
 #include "hero_chassis_controller/hero_chassis_controller.h"
 #include <pluginlib/class_list_macros.hpp>
+#include <pluginlib/class_list_macros.hpp>
 
 namespace hero_chassis_controller {
 
