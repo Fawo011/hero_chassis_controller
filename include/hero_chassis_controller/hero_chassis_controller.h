@@ -2,8 +2,8 @@
 // Created by qiayuan on 2/6/21.
 //
 
-#ifndef SIMPLE_CHASSIS_CONTROLLER_HERO_CHASSIS_CONTROLLER_H
-#define SIMPLE_CHASSIS_CONTROLLER_HERO_CHASSIS_CONTROLLER_H
+#ifndef HERO_CHASSIS_CONTROLLER_HERO_CHASSIS_CONTROLLER_H
+#define HERO_CHASSIS_CONTROLLER_HERO_CHASSIS_CONTROLLER_H
 
 #include <controller_interface/controller.h>
 #include <hardware_interface/joint_command_interface.h>
@@ -16,6 +16,7 @@
 #include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
 #include <math.h>
+#define RADIUS 0.07625
 
 namespace hero_chassis_controller {
 
@@ -59,7 +60,7 @@ class HeroChassisController : public controller_interface::Controller<hardware_i
 
     double Vxe{0.0}, Vye{0.0}, yawe{0.0};
     double Vxc{},Vyc{},yawc{};
-    double a{0.320},b{0.410},r{0.02};
+    double a{0.320},b{0.410};
     double cmd_rot[5]{};
     double dt{};
     double x{0.0}, y{0.0}, th{0.0};
@@ -81,4 +82,4 @@ class HeroChassisController : public controller_interface::Controller<hardware_i
 };
 }// namespace simple_chassis_controller
 
-#endif //HERO_CHASSIS_CONTROLLER_HERO_CHASSIS_CONTROLLER_H
+#endif //HERO_CHASSIS_CONTROLLER_INCLUDE_HERO_CHASSIS_CONTROLLER_H_

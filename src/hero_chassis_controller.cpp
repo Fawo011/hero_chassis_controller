@@ -7,109 +7,112 @@
 
 namespace hero_chassis_controller {
 
-    HeroChassisController::~HeroChassisController()
-    {
+    HeroChassisController::~HeroChassisController() {
         sub_command_.shutdown();
         odom_pub.shutdown();
     }
 
-bool HeroChassisController::init(hardware_interface::EffortJointInterface *effort_joint_interface,
-                                   ros::NodeHandle &root_nh, ros::NodeHandle &controller_nh) {
-  front_left_joint_ = effort_joint_interface->getHandle("left_front_wheel_joint");
-  front_right_joint_ = effort_joint_interface->getHandle("right_front_wheel_joint");
-  back_left_joint_ =  effort_joint_interface->getHandle("left_back_wheel_joint");
-  back_right_joint_ = effort_joint_interface->getHandle("right_back_wheel_joint");
+    bool HeroChassisController::init(hardware_interface::EffortJointInterface *effort_joint_interface,
+                                     ros::NodeHandle &root_nh, ros::NodeHandle &controller_nh) {
+        front_left_joint_ = effort_joint_interface->getHandle("left_front_wheel_joint");
+        front_right_joint_ = effort_joint_interface->getHandle("right_front_wheel_joint");
+        back_left_joint_ = effort_joint_interface->getHandle("left_back_wheel_joint");
+        back_right_joint_ = effort_joint_interface->getHandle("right_back_wheel_joint");
 
-  pid_controller1_.init(ros::NodeHandle(controller_nh,"pid1"));
-    pid_controller2_.init(ros::NodeHandle(controller_nh,"pid2"));
-    pid_controller3_.init(ros::NodeHandle(controller_nh,"pid3"));
-    pid_controller4_.init(ros::NodeHandle(controller_nh,"pid4"));
+        pid_controller1_.init(ros::NodeHandle(controller_nh, "pid1"));
+        pid_controller2_.init(ros::NodeHandle(controller_nh, "pid2"));
+        pid_controller3_.init(ros::NodeHandle(controller_nh, "pid3"));
+        pid_controller4_.init(ros::NodeHandle(controller_nh, "pid4"));
 
-    controller_state_publisher_ = std::make_unique < realtime_tools::RealtimePublisher < control_msgs::JointControllerState >>(controller_nh, "state", 1);
-    sub_command_ = root_nh.subscribe<geometry_msgs::Twist>("cmd_vel", 1, &HeroChassisController::get_vel_cmd,this);
+        controller_state_publisher_ = std::make_unique<realtime_tools::RealtimePublisher<control_msgs::JointControllerState >>(
+                controller_nh, "state", 1);
 
-  return true;
-}
+        sub_command_ = root_nh.subscribe<geometry_msgs::Twist>("cmd_vel", 1, &HeroChassisController::get_vel_cmd,
+                                                               this);;
 
-void HeroChassisController::update(const ros::Time &time, const ros::Duration &period) {
+        odom_pub = root_nh.advertise<nav_msgs::Odometry>("/odom", 50);
 
-    now = time;
-
-    vel_cur[1]=front_right_joint_.getVelocity();
-    vel_cur[2]=front_left_joint_.getVelocity();
-    vel_cur[3]=back_left_joint_.getVelocity();
-    vel_cur[4]=back_right_joint_.getVelocity();
-
-
-    //compute the command speed of wheel
-    compute_the_cmd();
-
-    transform_then_pub();
-
-    for(int i=1;i<5;i++) {
-        error[i] = vel_cmd[i] - vel_cur[i];
+        return true;
     }
 
+    void HeroChassisController::update(const ros::Time &time, const ros::Duration &period) {
 
-  front_right_joint_.setCommand(pid_controller1_.computeCommand(error[1], period));
-  front_left_joint_.setCommand(pid_controller2_.computeCommand(error[2], period));
-  back_left_joint_.setCommand(pid_controller3_.computeCommand(error[3], period));
-  back_right_joint_.setCommand(pid_controller4_.computeCommand(error[4], period));
+        now = time;
 
-    if (loop_count_ % 10 == 0)
-    {
-        if (controller_state_publisher_ && controller_state_publisher_->trylock())
-        {
-            controller_state_publisher_->msg_.header.stamp = now;
-            controller_state_publisher_->msg_.set_point = vel_cmd[1];
-            controller_state_publisher_->msg_.process_value = vel_cur[1];
-            controller_state_publisher_->msg_.error = error[1];
-            controller_state_publisher_->msg_.time_step = period.toSec();
-            controller_state_publisher_->msg_.command = pid_controller1_.computeCommand(error[1], period);
+        vel_cur[1] = front_right_joint_.getVelocity();
+        vel_cur[2] = front_left_joint_.getVelocity();
+        vel_cur[3] = back_left_joint_.getVelocity();
+        vel_cur[4] = back_right_joint_.getVelocity();
 
-            double dummy;
-            bool antiwindup;
-            pid_controller1_.getGains(controller_state_publisher_->msg_.p,
-                                      controller_state_publisher_->msg_.i,
-                                      controller_state_publisher_->msg_.d,
-                                      controller_state_publisher_->msg_.i_clamp,
-                                      dummy,
-                                      antiwindup);
-            controller_state_publisher_->msg_.antiwindup = static_cast<char>(antiwindup);
-            controller_state_publisher_->unlockAndPublish();
+
+
+
+        transform_then_pub();
+        //compute the command speed of wheel
+        compute_the_cmd();
+
+        for (int i = 1; i < 5; i++) {
+            error[i] = vel_cmd[i] - vel_cur[i];
         }
-    }
-    loop_count_++;
-    last_time = now;
+
+
+        front_right_joint_.setCommand(pid_controller1_.computeCommand(error[1], period));
+        front_left_joint_.setCommand(pid_controller2_.computeCommand(error[2], period));
+        back_left_joint_.setCommand(pid_controller3_.computeCommand(error[3], period));
+        back_right_joint_.setCommand(pid_controller4_.computeCommand(error[4], period));
+
+        if (loop_count_ % 10 == 0) {
+            if (controller_state_publisher_ && controller_state_publisher_->trylock()) {
+                controller_state_publisher_->msg_.header.stamp = now;
+                controller_state_publisher_->msg_.set_point = vel_cmd[1];
+                controller_state_publisher_->msg_.process_value = vel_cur[1];
+                controller_state_publisher_->msg_.error = error[1];
+                controller_state_publisher_->msg_.time_step = period.toSec();
+                controller_state_publisher_->msg_.command = pid_controller1_.computeCommand(error[1], period);
+
+                double dummy;
+                bool antiwindup;
+                pid_controller1_.getGains(controller_state_publisher_->msg_.p,
+                                          controller_state_publisher_->msg_.i,
+                                          controller_state_publisher_->msg_.d,
+                                          controller_state_publisher_->msg_.i_clamp,
+                                          dummy,
+                                          antiwindup);
+                controller_state_publisher_->msg_.antiwindup = static_cast<char>(antiwindup);
+                controller_state_publisher_->unlockAndPublish();
+            }
+        }
+        loop_count_++;
+        last_time = now;
     }
 
     void HeroChassisController::get_vel_cmd(const geometry_msgs::TwistConstPtr &msg) {
-        Vxe=msg->linear.x;
-        Vye=msg->linear.y;
-        yawe=msg->angular.z;
+        Vxe = msg->linear.x;
+        Vye = msg->linear.y;
+        yawe = msg->angular.z;
     }
 
     void HeroChassisController::compute_the_cmd() {
-        vel_cmd[1] = (Vxe + Vye + yawe * (a + b) / 2) / r;
-        vel_cmd[2] = (Vxe - Vye - yawe * (a + b) / 2) / r;
-        vel_cmd[3] = (Vxe + Vye - yawe * (a + b) / 2) / r;
-        vel_cmd[4] = (Vxe - Vye + yawe * (a + b) / 2) / r;
+        vel_cmd[1] = (Vxe + Vye + yawe * (a + b) / 2) / RADIUS;
+        vel_cmd[2] = (Vxe - Vye - yawe * (a + b) / 2) / RADIUS;
+        vel_cmd[3] = (Vxe + Vye - yawe * (a + b) / 2) / RADIUS;
+        vel_cmd[4] = (Vxe - Vye + yawe * (a + b) / 2) / RADIUS;
     };
 
     void HeroChassisController::compute_the_cmd_rot() {
         compute_the_cmd();
 
-        for(int i =  1; i<5 ; i++ ){
-        cmd_rot[i]=vel_cmd[i]/2/(2*asin(1));
-            ROS_INFO("cmo rot is:%lf",cmd_rot[i]);
+        for (int i = 1; i < 5; i++) {
+            cmd_rot[i] = vel_cmd[i] / 2 / (2 * asin(1));
+            ROS_INFO("cmo rot is:%lf", cmd_rot[i]);
         }
 
     }
 
     void HeroChassisController::compute_the_cur_vel() {
-        Vx_cur = (vel_cur[1] + vel_cur[2] + vel_cur[3] + vel_cur[4]) * r / 4;
-        Vy_cur = (vel_cur[1] - vel_cur[2] + vel_cur[3] - vel_cur[4]) * r / 4;
-        yaw_cur = (vel_cur[1] - vel_cur[2] - vel_cur[3] + vel_cur[4]) * r / 2 / (a + b);
+        Vx_cur = (vel_cur[1] + vel_cur[2] + vel_cur[3] + vel_cur[4]) * RADIUS / 4;
+        Vy_cur = (vel_cur[1] - vel_cur[2] + vel_cur[3] - vel_cur[4]) * RADIUS / 4;
+        yaw_cur = (vel_cur[1] - vel_cur[2] - vel_cur[3] + vel_cur[4]) * RADIUS / 2 / (a + b);
 
     }
 
@@ -120,7 +123,7 @@ void HeroChassisController::update(const ros::Time &time, const ros::Duration &p
 
         compute_the_cur_vel();
 
-        now=ros::Time::now();
+        now = ros::Time::now();
 
         //compute odometry in a typical way given the velocities of the robot
         dt = (now - last_time).toSec();
@@ -172,6 +175,11 @@ void HeroChassisController::update(const ros::Time &time, const ros::Duration &p
         last_time = now;
     }
 
+    void HeroChassisController::transform_the_frame() {
 
-PLUGINLIB_EXPORT_CLASS(hero_chassis_controller::HeroChassisController, controller_interface::ControllerBase)
+
+    }
 }
+PLUGINLIB_EXPORT_CLASS(hero_chassis_controller::HeroChassisController,
+                       controller_interface::ControllerBase)
+

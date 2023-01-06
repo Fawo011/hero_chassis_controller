@@ -7,20 +7,24 @@
   <license>BSD</license>
   <author email="liaoqiayuan@gmail.com">Qiayuan Liao</author>
 
-  <!-- buildtool_depend: dependencies of the build process -->
-  <buildtool_depend>catkin</buildtool_depend>
-  <!-- build_depend: dependencies only used in source files -->
 
-  <!-- depend: build, export, and execution dependency -->
+  <buildtool_depend>catkin</buildtool_depend>
+
   <depend>roscpp</depend>
   <depend>roslint</depend>
   <depend>controller_interface</depend>
   <depend>hardware_interface</depend>
   <depend>forward_command_controller</depend>
-  <depend>pluginlib</depend>
+  <depend>control_toolbox</depend>
+  <depend>control_msgs</depend>
+  <depend>geometry_msgs</depend>
   <depend>rm_description</depend>
+  <depend>realtime_tools</depend>
+  <depend>tf</depend>
+  <depend>nav_msgs</depend>
+  <depend>pluginlib</depend>
 
   <export>
-    <controller_interface plugin="${prefix}/simple_chassis_controller_plugins.xml"/>
+    <controller_interface plugin="${prefix}/hero_chassis_controller_plugins.xml"/>
   </export>
 </package>
