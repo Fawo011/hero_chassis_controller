@@ -72,11 +72,7 @@ class HeroChassisController : public controller_interface::Controller<hardware_i
 
     ros::Time last_time;
     ros::Time now;
-    tf::TransformBroadcaster frame_broadcaster;
-    tf::TransformListener frame_listener;
-    tf::StampedTransform transform;
-    geometry_msgs::Vector3Stamped vel_in;
-    geometry_msgs::Vector3Stamped vel_out;
+
 
 
 };
