@@ -45,7 +45,9 @@ namespace hero_chassis_controller {
         vel_cur[3] = back_left_joint_.getVelocity();
         vel_cur[4] = back_right_joint_.getVelocity();
 
-
+    if(mode){
+        transform_vel();
+    }
 
 
         transform_then_pub();
@@ -105,7 +107,6 @@ namespace hero_chassis_controller {
 
         for (int i = 1; i < 5; i++) {
             cmd_rot[i] = vel_cmd[i] / 2 / (2 * asin(1));
-            ROS_INFO("cmo rot is:%lf", cmd_rot[i]);
         }
 
     }
@@ -176,8 +177,21 @@ namespace hero_chassis_controller {
         last_time = now;
     }
 
-    void HeroChassisController::transform_the_frame() {
+    void HeroChassisController::transform_vel() {
+        vel_odom.header.stamp = ros::Time(now);
+        vel_odom.header.frame_id = "odom";
+        vel_odom.vector.x = Vxe;
+        vel_odom.vector.y = Vye;
+        vel_odom.vector.z = yawe;
 
+        // use the API of the listeners
+        frame_listener.waitForTransform("base_link", "odom", ros::Time(0.0),
+                                        ros::Duration(1.0));
+        frame_listener.transformVector("base_link", vel_odom, vel_base);
+
+        Vxe = vel_base.vector.x;
+        Vye = vel_base.vector.y;
+        yawe = vel_base.vector.z;
 
     }
 }

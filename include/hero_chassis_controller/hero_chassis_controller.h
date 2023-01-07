@@ -50,7 +50,7 @@ class HeroChassisController : public controller_interface::Controller<hardware_i
     void compute_the_cmd_rot();
     void compute_the_cur_vel();
     void transform_then_pub();
-    void transform_the_frame();
+    void transform_vel();
     //command vel
     double vel_cmd[5]{0.0,0.0,0.0,0.0,0.0};
     //vel after giving PID
@@ -73,7 +73,11 @@ class HeroChassisController : public controller_interface::Controller<hardware_i
     ros::Time last_time;
     ros::Time now;
 
-
+    tf::TransformBroadcaster frame_broadcaster;
+    tf::TransformListener frame_listener;
+    geometry_msgs::Vector3Stamped vel_odom;
+    geometry_msgs::Vector3Stamped vel_base;
+    bool mode;
 
 };
 }// namespace simple_chassis_controller
