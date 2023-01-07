@@ -184,9 +184,7 @@ namespace hero_chassis_controller {
         vel_odom.vector.y = Vye;
         vel_odom.vector.z = yawe;
 
-        // use the API of the listeners
-        frame_listener.waitForTransform("base_link", "odom", ros::Time(0.0),
-                                        ros::Duration(1.0));
+        frame_listener.waitForTransform("base_link", "odom", ros::Time(0.0),ros::Duration(1.0));
         frame_listener.transformVector("base_link", vel_odom, vel_base);
 
         Vxe = vel_base.vector.x;
